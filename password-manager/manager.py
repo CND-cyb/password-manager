@@ -1,4 +1,4 @@
-import base64, os, json, getpass, random, string
+import base64, os, json, getpass, secrets, string, pyperclip, time
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 from cryptography.fernet import Fernet
@@ -7,8 +7,14 @@ def generate_password(length=16):
     characters = string.ascii_letters + string.digits + string.punctuation
     message = ""
     for i in range(length):
-        message += random.choice(characters)
+        message += secrets.choice(characters)
     return message
+
+def copy_to_clipboard(password):
+    pyperclip.copy(password)
+    print("Mot de passe copié dans le presse-papiers pendant 10 secondes.")
+    time.sleep(10)
+    pyperclip.copy("")
 
 def derive_key(password, salt):
     kdf = PBKDF2HMAC(
@@ -84,6 +90,6 @@ if __name__ == "__main__":
             found_pwd = data.get(site)
             
             if found_pwd:
-                print(f"Le mot de passe est : {found_pwd}")
+                copy_to_clipboard(found_pwd)
             else:
                 print("Aucun mot de passe trouvé pour ce site.")
