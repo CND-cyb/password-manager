@@ -3,6 +3,13 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 from cryptography.fernet import Fernet
 
+def generate_password(length=16):
+    characters = string.ascii_letters + string.digits + string.punctuation
+    message = ""
+    for i in range(length):
+        message += random.choice(characters)
+    return message
+
 def derive_key(password, salt):
     kdf = PBKDF2HMAC(
         algorithm=hashes.SHA256(),
@@ -27,10 +34,8 @@ def load_data(filename, master_password):
 
         key = derive_key(master_password, salt_from_file)
         f_read = Fernet(base64.urlsafe_b64encode(key))
-        
         text = f_read.decrypt(token_from_file)
         return json.loads(text.decode())
-        
     except Exception:
         return None 
 
@@ -66,6 +71,9 @@ if __name__ == "__main__":
         elif choice == "a" or choice == "ajouter":
             site = input("Nom du site : ")
             pwd = input("Mot de passe : ")
+            if pwd == "":
+                pwd = generate_password()
+                print(f"Mot de passe généré.")
             
             data[site] = pwd
             save_data("data.txt", master_password, data)
