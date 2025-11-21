@@ -2,6 +2,7 @@ import base64, os, json, getpass, secrets, string, pyperclip, time, threading
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 from cryptography.fernet import Fernet
+import hashlib, requests
 
 class PasswordManager:
     def __init__(self, filename):
@@ -29,11 +30,15 @@ class PasswordManager:
             - True: Coffre-fort dévérouillé
         """
         if not os.path.exists(self.filename):
+            self.salt = os.urandom(16)
+            self.key = self.derive_key(master_password, self.salt)
             return True
         try:
             with open(self.filename, "r") as f:
                 lines = f.read().splitlines()
                 if not lines: 
+                    self.salt = os.urandom(16)
+                    self.key = self.derive_key(master_password, self.salt)
                     return True
                 
                 salt_from_file = bytes.fromhex(lines[0])
@@ -56,7 +61,7 @@ class PasswordManager:
         """
         if self.key is None:
             print("Clé invalide")
-            return 0
+            return False
         f = Fernet(base64.urlsafe_b64encode(self.key))
         passwords_json = json.dumps(self.data)
         token = f.encrypt(passwords_json.encode())
@@ -65,6 +70,7 @@ class PasswordManager:
             f.write(self.salt.hex() + "\n")
             f.write(token.decode())
         os.replace(tempfile, self.filename)
+        return True
 
     def add_password(self, site:str, password:str):
         """
@@ -85,6 +91,29 @@ class PasswordManager:
         """
         return list(self.data.keys())
     
+    def check_pwned(self, password:str):
+        """
+        Vérifie si le mot de passe a été compromis avec l'API "Have I Been Pwned"
+        """
+        n_matches = 0
+        sha1pwd = hashlib.sha1(password.encode()).hexdigest().upper()
+        try:
+            PWNED_API_URL = "https://api.pwnedpasswords.com/range/"
+            response = requests.get(PWNED_API_URL + sha1pwd[:5], timeout=2)
+            if response.status_code == 200:
+                hashes = (line.split(":") for line in response.text.splitlines())
+                for h, count in hashes:
+                    if h == sha1pwd[5:]:
+                        n_matches = int(count)
+                        return n_matches
+                return 0
+            else:
+                print("Erreur API")
+                return 0
+        except Exception as e:
+            print(f"Erreur: {e}")
+            return 0
+
 def generate_password(length=16):
     """
     Génération d'un mot de passe avec lettres + chiffres + symboles
@@ -129,8 +158,16 @@ if __name__ == "__main__":
                 if pwd == "":
                     pwd = generate_password()
                     print(f"Mot de passe généré.")
-                
+                else:
+                    count = manager.check_pwned(pwd)
+                    if count > 0:
+                        print(f"Ce mot de passe apparait {count} fois dans des fuites de données.")
+                        confirm = input("Voulez-vous vraiment l'utiliser ? (o/n) : ").lower()
+                        if confirm != "o":
+                            continue
+
                 manager.add_password(site, pwd)
+                print(f"Mot de passe ajouté pour le site {site}.")
                 
             elif choice == "v" or choice == "voir":
                 sites = manager.list_sites()
