@@ -164,7 +164,7 @@ if __name__ == "__main__":
                 for site in manager.list_sites():
                     print(f"[*] {site}")
             print()
-            choice = input("Menu : [a]jouter / [v]oir / [q]uitter : ").lower()
+            choice = input("Menu : [a]jouter / [s]upprimer / [v]oir / [q]uitter : ").lower()
             
             match choice:
                 case "q":
@@ -188,6 +188,19 @@ if __name__ == "__main__":
                     manager.add_password(site, pwd)
                     os.system('cls' if os.name == 'nt' else 'clear')
                     print(f"Mot de passe ajouté pour le site {site}.\n")
+                case "s" | "supprimer":
+                    os.system('cls' if os.name == 'nt' else 'clear')
+                    sites = manager.list_sites()
+                    if not sites:
+                        print("Le coffre est vide")
+                    else:
+                        print("Sites disponibles :")
+                        for site in manager.list_sites():
+                            print(f"- {site}")
+                        site = input("Nom du site à supprimer: ")
+                        manager.delete_password(site)
+                        os.system('cls' if os.name == 'nt' else 'clear')
+                        print(f"Mot de passe pour le site {site} supprimé.")
                 case "v" | "voir":
                     os.system('cls' if os.name == 'nt' else 'clear')
                     sites = manager.list_sites()
