@@ -52,7 +52,7 @@ class PasswordManager:
                 self.salt = salt_from_file
                 return True
         except Exception:
-            return False
+            return False   
         
     def save(self):
         """
@@ -78,6 +78,14 @@ class PasswordManager:
         """
         self.data[site] = password
         self.save()
+
+    def delete_password(self, site:str):
+        """
+        Supprime le mot de passe du site sélectionné
+        """
+        if site in self.data:
+            del self.data[site]
+            self.save()
 
     def get_password(self, site:str):
         """
@@ -145,10 +153,9 @@ if __name__ == "__main__":
     master_password = getpass.getpass("Mot de passe maître: ")
     
     if manager.unlock(master_password):
+        os.system('cls' if os.name == 'nt' else 'clear')
         del master_password
         while True:
-            os.system('cls' if os.name == 'nt' else 'clear')
-            print("Gestionnaire de mots de passe")
             sites = manager.list_sites()
             if not sites:
                 print("Le coffre est vide")
@@ -159,43 +166,48 @@ if __name__ == "__main__":
             print()
             choice = input("Menu : [a]jouter / [v]oir / [q]uitter : ").lower()
             
-            if choice == "q":
-                break
-                
-            elif choice == "a" or choice == "ajouter":
-                os.system('cls' if os.name == 'nt' else 'clear')
-                site = input("\nNom du site: ")
-                pwd = input("Mot de passe: ")
-                if pwd == "":
-                    pwd = generate_password()
-                    print(f"Mot de passe généré.")
-                else:
-                    count = manager.check_pwned(pwd)
-                    if count > 0:
-                        print(f"Ce mot de passe apparait {count} fois dans des fuites de données.")
-                        confirm = input("Voulez-vous vraiment l'utiliser ? (o/n) : ").lower()
-                        if confirm != "o":
-                            continue
-
-                manager.add_password(site, pwd)
-                print(f"Mot de passe ajouté pour le site {site}.")
-                
-            elif choice == "v" or choice == "voir":
-                os.system('cls' if os.name == 'nt' else 'clear')
-                sites = manager.list_sites()
-                if not sites:
-                    print("Le coffre est vide")
-                else:
-                    print("Sites disponibles :")
-                    for site in manager.list_sites():
-                        print(f"- {site}")
+            match choice:
+                case "q":
+                    os.system('cls' if os.name == 'nt' else 'clear')
+                    break
+                case "a" | "ajouter":
+                    os.system('cls' if os.name == 'nt' else 'clear')
                     site = input("Nom du site: ")
-                    found_pwd = manager.get_password(site)
-                    
-                    if found_pwd:
-                        copy_to_clipboard(found_pwd)
-                        print("Mot de passe copié")
+                    pwd = input("Mot de passe: ")
+                    if pwd == "":
+                        pwd = generate_password()
+                        print(f"Mot de passe généré.")
                     else:
-                        print("Aucun mot de passe trouvé.")
+                        count = manager.check_pwned(pwd)
+                        if count > 0:
+                            print(f"Ce mot de passe apparait {count} fois dans des fuites de données.")
+                            confirm = input("Voulez-vous vraiment l'utiliser ? (o/n) : ").lower()
+                            if confirm != "o":
+                                continue
+
+                    manager.add_password(site, pwd)
+                    os.system('cls' if os.name == 'nt' else 'clear')
+                    print(f"Mot de passe ajouté pour le site {site}.\n")
+                case "v" | "voir":
+                    os.system('cls' if os.name == 'nt' else 'clear')
+                    sites = manager.list_sites()
+                    if not sites:
+                        print("Le coffre est vide")
+                    else:
+                        print("Sites disponibles :")
+                        for site in manager.list_sites():
+                            print(f"- {site}")
+                        site = input("Nom du site: ")
+                        found_pwd = manager.get_password(site)
+                        
+                        if found_pwd:
+                            copy_to_clipboard(found_pwd)
+                            os.system('cls' if os.name == 'nt' else 'clear')
+                            print("Mot de passe copié\n")
+                        else:
+                            os.system('cls' if os.name == 'nt' else 'clear')
+                            print("Aucun mot de passe trouvé.\n")
+                case _:
+                    print("Choix invalide.")
     else:
         print("Mot de passe incorrect.")
