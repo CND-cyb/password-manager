@@ -1,4 +1,4 @@
-import base64, os, json, getpass, secrets, string, pyperclip, time
+import base64, os, json, getpass, secrets, string, pyperclip, time, threading
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 from cryptography.fernet import Fernet
@@ -58,6 +58,9 @@ class PasswordManager:
     def get_password(self, site):
         return self.data.get(site)
     
+    def list_sites(self):
+        return list(self.data.keys())
+    
 def generate_password(length=16):
     characters = string.ascii_letters + string.digits + string.punctuation
     message = ""
@@ -67,40 +70,48 @@ def generate_password(length=16):
 
 def copy_to_clipboard(password):
     pyperclip.copy(password)
-    print("Mot de passe copié dans le presse-papiers pendant 10 secondes.")
-    time.sleep(10)
+    t = threading.Timer(10.0, clear_clipboard)
+    t.daemon = True 
+    t.start()
+
+def clear_clipboard():
     pyperclip.copy("")
 
 if __name__ == "__main__":
     manager = PasswordManager("data.txt")
-    master_password = getpass.getpass("Entrez le mot de passe maître : ")
+    master_password = getpass.getpass("Mot de passe maître: ")
     
     if manager.unlock(master_password):
-        print(f"Coffre ouvert ! {len(manager.data)} mot(s) de passe chargé(s).")
         while True:
             choice = input("\nMenu : [a]jouter / [v]oir / [q]uitter : ").lower()
             
             if choice == "q":
-                print("Fermeture du coffre...")
                 break
                 
             elif choice == "a" or choice == "ajouter":
-                site = input("Nom du site : ")
-                pwd = input("Mot de passe : ")
+                site = input("Nom du site: ")
+                pwd = input("Mot de passe: ")
                 if pwd == "":
                     pwd = generate_password()
                     print(f"Mot de passe généré.")
                 
                 manager.add_password(site, pwd, master_password)
-                print(f"Mot de passe pour {site} sauvegardé !")
                 
             elif choice == "v" or choice == "voir":
-                site = input("Quel site cherchez-vous ? : ")
-                found_pwd = manager.get_password(site)
-                
-                if found_pwd:
-                    copy_to_clipboard(found_pwd)
+                sites = manager.list_sites()
+                if not sites:
+                    print("Le coffre est vide")
                 else:
-                    print("Aucun mot de passe trouvé pour ce site.")
+                    print("Sites disponibles :")
+                    for site in manager.list_sites():
+                        print(f"- {site}")
+                    site = input("Nom du site: ")
+                    found_pwd = manager.get_password(site)
+                    
+                    if found_pwd:
+                        copy_to_clipboard(found_pwd)
+                        print("Mot de passe copié")
+                    else:
+                        print("Aucun mot de passe trouvé.")
     else:
-        print("Mot de passe maître incorrect.")
+        print("Mot de passe incorrect.")
