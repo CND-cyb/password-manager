@@ -147,13 +147,24 @@ if __name__ == "__main__":
     if manager.unlock(master_password):
         del master_password
         while True:
-            choice = input("\nMenu : [a]jouter / [v]oir / [q]uitter : ").lower()
+            os.system('cls' if os.name == 'nt' else 'clear')
+            print("Gestionnaire de mots de passe")
+            sites = manager.list_sites()
+            if not sites:
+                print("Le coffre est vide")
+            else:
+                print("\nSites disponibles :")
+                for site in manager.list_sites():
+                    print(f"[*] {site}")
+            print()
+            choice = input("Menu : [a]jouter / [v]oir / [q]uitter : ").lower()
             
             if choice == "q":
                 break
                 
             elif choice == "a" or choice == "ajouter":
-                site = input("Nom du site: ")
+                os.system('cls' if os.name == 'nt' else 'clear')
+                site = input("\nNom du site: ")
                 pwd = input("Mot de passe: ")
                 if pwd == "":
                     pwd = generate_password()
@@ -170,6 +181,7 @@ if __name__ == "__main__":
                 print(f"Mot de passe ajouté pour le site {site}.")
                 
             elif choice == "v" or choice == "voir":
+                os.system('cls' if os.name == 'nt' else 'clear')
                 sites = manager.list_sites()
                 if not sites:
                     print("Le coffre est vide")
