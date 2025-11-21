@@ -1,8 +1,9 @@
-import base64, os, json, getpass, secrets, string, pyperclip, time, threading
+import base64, os, json, getpass, secrets, string, pyperclip, threading
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 from cryptography.fernet import Fernet
 import hashlib, requests
+from pyfiglet import Figlet
 
 class PasswordManager:
     def __init__(self, filename):
@@ -150,8 +151,9 @@ def clear_clipboard():
 
 if __name__ == "__main__":
     manager = PasswordManager("data.txt")
+    f = Figlet(font="standard", width=200)
+    print(f.renderText("PyPass"))
     master_password = getpass.getpass("Mot de passe maître: ")
-    
     if manager.unlock(master_password):
         os.system('cls' if os.name == 'nt' else 'clear')
         del master_password
