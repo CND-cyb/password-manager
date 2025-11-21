@@ -122,6 +122,17 @@ class PasswordManager:
         except Exception as e:
             print(f"Erreur: {e}")
             return 0
+        
+    def search(self, query:str):
+        """
+        Recherche les sites correspondant à la requête
+        """
+        results = []
+        for site in self.data.keys():
+            if query.lower() in site.lower():
+                results.append(site)
+        return results
+
 
 def generate_password(length=16):
     """
@@ -205,23 +216,36 @@ if __name__ == "__main__":
                         print(f"Mot de passe pour le site {site} supprimé.")
                 case "v" | "voir":
                     os.system('cls' if os.name == 'nt' else 'clear')
-                    sites = manager.list_sites()
-                    if not sites:
-                        print("Le coffre est vide")
+                    query = input("Rechercher un site: ")
+                    if not query:
+                        continue  
+                    results = manager.search(query)
+                    if not results:
+                        print("Aucun site trouvé")
+                    elif len(results) == 1:
+                        os.system('cls' if os.name == 'nt' else 'clear')
+                        site_found = results[0]
+                        print(f"Site trouvé : {site_found}")
+                        pwd = manager.get_password(site_found)
+                        copy_to_clipboard(pwd)
+                        print("Mot de passe copié pendant 10 secondes")
                     else:
-                        print("Sites disponibles :")
-                        for site in manager.list_sites():
-                            print(f"- {site}")
-                        site = input("Nom du site: ")
-                        found_pwd = manager.get_password(site)
-                        
-                        if found_pwd:
-                            copy_to_clipboard(found_pwd)
-                            os.system('cls' if os.name == 'nt' else 'clear')
-                            print("Mot de passe copié\n")
-                        else:
-                            os.system('cls' if os.name == 'nt' else 'clear')
-                            print("Aucun mot de passe trouvé.\n")
+                        os.system('cls' if os.name == 'nt' else 'clear')
+                        print(f"Plusieurs sites trouvés ({len(results)}) :")
+                        for i, s in enumerate(results):
+                            print(f" {i+1}. {s}")
+                        try:
+                            choice_idx = int(input("Entrez le numéro du site: ")) - 1
+                            if 0 <= choice_idx < len(results):
+                                site_found = results[choice_idx]
+                                pwd = manager.get_password(site_found)
+                                copy_to_clipboard(pwd)
+                                os.system('cls' if os.name == 'nt' else 'clear')
+                                print(f"Mot de passe pour {site_found} copié pendant 10 secondes")
+                            else:
+                                print("Numéro invalide.")
+                        except ValueError:
+                            print("Entrée invalide.")
                 case _:
                     print("Choix invalide.")
     else:
