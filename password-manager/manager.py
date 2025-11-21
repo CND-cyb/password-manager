@@ -45,9 +45,11 @@ class PasswordManager:
         
         passwords_json = json.dumps(self.data)
         token = f.encrypt(passwords_json.encode())
-        with open(self.filename, "w") as f:
+        tempfile = self.filename + ".tmp"
+        with open(tempfile, "w") as f:
             f.write(salt.hex() + "\n")
             f.write(token.decode())
+        os.replace(tempfile, self.filename)
 
     def add_password(self, site, password, master_password):
         self.data[site] = password
@@ -70,8 +72,6 @@ def copy_to_clipboard(password):
     pyperclip.copy("")
 
 if __name__ == "__main__":
-    print("#### COFFRE-FORT PYTHON ####")
-
     manager = PasswordManager("data.txt")
     master_password = getpass.getpass("Entrez le mot de passe maître : ")
     
