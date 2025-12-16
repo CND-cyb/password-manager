@@ -1,4 +1,4 @@
-# PyPass - Secure CLI Password Manager 🔐
+# PyPass - Secure CLI Password Manager
 
 **PyPass** is a robust, command-line interface (CLI) password manager written in Python. It focuses on local security, strong encryption standards, and user safety features like breach detection.
 
